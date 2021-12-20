@@ -1,0 +1,8 @@
+version: "2"
+
+services:
+  edge2influx:
+    image: docker-local-influx
+    env_file:
+    - settings.env
+ 
