@@ -1,0 +1,8 @@
+version: "2"
+
+services:
+  myhome:
+    image: denissaz/myhome:0.0.1
+    env_file:
+    - ../settings.env
+ 

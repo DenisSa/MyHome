@@ -9,7 +9,7 @@ import certifi
 from aiohttp import ServerFingerprintMismatch
 from dotenv import load_dotenv
 from influxdb_client import InfluxDBClient, Point
-from influxdb_client.client.write_api import ASYNCHRONOUS, SYNCHRONOUS
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 import asyncio
 from contextlib import AsyncExitStack
@@ -21,7 +21,7 @@ from binascii import a2b_hex, b2a_hex
 
 from Collectors.EdgeOS.Datapoints import Interfaces
 
-load_dotenv("settings.env")
+load_dotenv("../settings.env")
 
 DEBUG_MODE = os.environ.get('DEBUG_MODE', None)
 

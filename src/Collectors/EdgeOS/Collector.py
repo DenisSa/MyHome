@@ -31,14 +31,14 @@ class EdgeOSCollector:
 
     async def latency_check(self, local_client, edgeos, hostname, target, count, size):
         try:
-            logging.info(f"Pinging {target}")
+            logging.debug(f"Pinging {target}")
             await edgeos.ping(target=target, count=count, size=size)
 
             local_client.write(LatencyPoint(router=hostname,
                                             target=target,
                                             latency=edgeos.sysdata['ping-data'][target].get('avg', '1000'),
                                             lost=edgeos.sysdata['ping-data'][target].get('lost', None)))
-            logging.info(f"Pinging {target} and storing data done, sleeping for {self.ping_interval} seconds")
+            logging.debug(f"Pinging {target} and storing data done, sleeping for {self.ping_interval} seconds")
         except:
             logging.exception("latency_check")
 
@@ -178,7 +178,7 @@ class EdgeOSCollector:
 
 
 if __name__ == '__main__':
-    load_dotenv("../../settings.env")
+    load_dotenv("../settings.env")
 
     influx_url = os.environ['INFLUX_URL']
     influx_token = os.environ['INFLUX_TOKEN']
