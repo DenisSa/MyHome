@@ -158,6 +158,7 @@ class EdgeOSCollector(AbstractCollector):
             raise Exception(f"ROUTER_SSL {self.router_ssl} is invalid")
 
     async def start(self):
+        logging.info(f"Starting {self.__class__}")
         await self.main_loop()
 
     def stop(self):

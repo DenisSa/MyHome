@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 from dotenv import load_dotenv
 
 from Collectors.EdgeOS.Collector import EdgeOSCollector
+from Collectors.Environment.Collector import EnvironmentCollector
 from DB.InfluxDBCloud import InfluxDBCloud
 
 _loop = None
@@ -44,8 +45,11 @@ if __name__ == '__main__':
         eosc = EdgeOSCollector(db_writer)
         eosc.register_collector()
 
-        schedule_background(eosc.start())
+        envc = EnvironmentCollector(db_writer)
+        envc.register_collector()
 
-    logging.info("Hit")
+        schedule_background(eosc.start())
+        schedule_background(envc.start())
+
     while True:
         sleep(1)
