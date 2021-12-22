@@ -1,19 +1,33 @@
+import asyncio
+import logging
+import os
+from binascii import a2b_hex, b2a_hex
+from contextlib import AsyncExitStack
+
+import aiohttp
 from aioedgeos import EdgeOS, TaskEvery
 from aiohttp import ServerFingerprintMismatch
 from dotenv import load_dotenv
 
-import asyncio
-from contextlib import AsyncExitStack
-import logging
-import os
-import aiohttp
-from binascii import a2b_hex, b2a_hex
-
+from Collectors.AbstractCollector import AbstractCollector
 from Collectors.EdgeOS.Datapoints import Interfaces, LatencyPoint, SystemStats
 from DB.InfluxDBCloud import InfluxDBCloud
 
 
-class EdgeOSCollector:
+class EdgeOSCollector(AbstractCollector):
+
+    def __init__(self, writer):
+        super().__init__(writer)
+        self.router_tagname = None
+        self.router_ssl = None
+        self.ssl_check = None
+        self.ping_interval = None
+        self.ping_size = None
+        self.ping_count = None
+        self.ping_target = None
+        self.router_username = None
+        self.router_password = None
+        self.router_url = None
 
     @staticmethod
     def process_interfaces(value, hostname):
@@ -41,24 +55,6 @@ class EdgeOSCollector:
             logging.debug(f"Pinging {target} and storing data done, sleeping for {self.ping_interval} seconds")
         except:
             logging.exception("latency_check")
-
-    def __init__(self, writer):
-        self.db_writer = writer
-        self.router_tagname = None
-        self.router_ssl = None
-        self.ssl_check = None
-        self.ping_interval = None
-        self.ping_size = None
-        self.ping_count = None
-        self.ping_target = None
-        self.influx_bucket = None
-        self.influx_org = None
-        self.influx_token = None
-        self.influx_url = None
-        self.router_username = None
-        self.router_password = None
-        self.router_url = None
-        self.debug_mode = None
 
     async def main_loop(self):
         async with AsyncExitStack() as stack:
@@ -119,13 +115,11 @@ class EdgeOSCollector:
     ===============   TLS/SSL HASH MISMATCH ===============''')
 
     def register_collector(self):
-        self.debug_mode = os.environ.get('DEBUG_MODE', None)
-
-        '''
+        """
         If you want to replace the system hostname with something
         else and don't want to change the router config you can
         change it here
-        '''
+        """
         self.router_tagname = os.environ.get('ROUTER_TAGNAME', None)
 
         ''' Credentials to get into the webUI '''
@@ -163,15 +157,8 @@ class EdgeOSCollector:
         else:
             raise Exception(f"ROUTER_SSL {self.router_ssl} is invalid")
 
-        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-        logger = logging.getLogger()
-        if self.debug_mode:
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.INFO)
-
-    def start(self):
-        asyncio.run(self.main_loop())
+    async def start(self):
+        await self.main_loop()
 
     def stop(self):
         pass
@@ -179,6 +166,9 @@ class EdgeOSCollector:
 
 if __name__ == '__main__':
     load_dotenv("../settings.env")
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
 
     influx_url = os.environ['INFLUX_URL']
     influx_token = os.environ['INFLUX_TOKEN']
@@ -188,4 +178,5 @@ if __name__ == '__main__':
     with InfluxDBCloud(influx_url, influx_bucket, influx_token, influx_org) as db_writer:
         eosc = EdgeOSCollector(db_writer)
         eosc.register_collector()
-        eosc.start()
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(eosc.start())
